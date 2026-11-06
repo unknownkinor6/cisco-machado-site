@@ -1,0 +1,26 @@
+/* Text motion (assets/type.js, 2026-11-05): the words on every page develop in their own way while the camera
+   rests there, then sit still. type.js splits them into spans for show only; the end state is the page as it was. */
+
+/* the original words, for screen readers, on paragraphs whose words are split for show */
+.sr-only {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0; overflow: hidden;
+  clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; user-select: none; -webkit-user-select: none;
+}
+/* t-g: the letters of one word stay on one line; t-c / t-w: a letter / a word that moves; t-i: one that only changes colour */
+.t-g, .t-w { white-space: nowrap; }
+.t-c, .t-w { display: inline-block; }
+.t-c.t-i, .t-w.t-i { display: inline; }
+
+/* Hello, The vote and Today: their headline lines used to rise as blocks (.ln in blend.css); type.js moves them now */
+html.type-on .ln { overflow: visible; }
+html.type-on .ln > span { transform: none; transition: none; }
+
+/* What built me: a tile's words light up one after another when the orange tile reaches it.
+   (blend.css shows/hides ".tile span" on phones; the word spans inside stay inline) */
+.tile span .t-x { display: inline; }
+.tile.cur span .t-x { animation: t-tile .6s cubic-bezier(.2, .7, .1, 1) backwards; animation-delay: calc(var(--i, 0) * 26ms); }
+@keyframes t-tile { from { opacity: .16; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .tile.cur span .t-x { animation: none; }
+}

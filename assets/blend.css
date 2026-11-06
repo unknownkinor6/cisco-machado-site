@@ -1,0 +1,455 @@
+:root {
+  --ink: #0B0B0C;
+  --night: #070708;
+  --paper: #EDE9E1;
+  --space: #18181A;
+  --accent: #FF4D1A;
+  --on-dark: #F1EEE8;
+  --on-dark-mute: #8E8C87;
+  --on-paper: #0B0B0C;
+  --on-paper-mute: #6B6860;
+  --sans: "Inter Tight", system-ui, sans-serif;
+  --serif: "Instrument Serif", Georgia, serif;
+  --mono: "JetBrains Mono", ui-monospace, monospace;
+  --gutter: clamp(16px, 3.2vw, 48px);
+  --bar-h: 64px;
+  /* set by blend.js: the screen size the panels are built for */
+  --vw: 100vw;
+  --vh: 100vh;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: var(--space); }
+body {
+  color: var(--on-dark);
+  font-family: var(--sans);
+  font-size: 17px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+a { color: inherit; }
+ul, ol { list-style: none; }
+.mono { font-family: var(--mono); font-size: 12px; letter-spacing: .02em; text-transform: uppercase; line-height: 1.6; }
+.muted { opacity: .62; }
+::selection { background: var(--accent); color: var(--ink); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.stop { font-style: normal; color: var(--accent); }
+
+/* ---------- the space: dot grid, moves and scales with the camera ---------- */
+.space {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-color: var(--space);
+  background-image: radial-gradient(circle, rgba(241,238,232,.22) 1.1px, transparent 1.4px);
+  background-size: 64px 64px;
+}
+.spacer { position: relative; z-index: -1; width: 1px; }
+
+/* ---------- the world: every panel sits here at its own place; one transform moves the lot ---------- */
+.world { position: fixed; top: 0; left: 0; z-index: 1; transform-origin: 0 0; will-change: transform; }
+/* painted once at full size and moved as one layer: a zoom-out only shrinks it, so it stays sharp */
+.st {
+  position: absolute; width: var(--vw); height: var(--vh); overflow: hidden;
+  padding: calc(var(--bar-h) + 28px) var(--gutter) 92px;
+}
+.st.ink { background: var(--ink); color: var(--on-dark); box-shadow: 0 0 0 1px #262628; }
+.st.night { background: var(--night); color: var(--on-dark); box-shadow: 0 0 0 1px #222224; }
+.st.paper { background: var(--paper); color: var(--on-paper); }
+.st.paper .muted { color: var(--on-paper-mute); opacity: 1; }
+.kicker { opacity: .6; margin-bottom: clamp(18px, 3vh, 36px); }
+
+/* faint column lines inside each panel (Daniele) */
+.st::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background-image: linear-gradient(to right, currentColor 1px, transparent 1px);
+  background-size: calc((var(--vw) - 2 * var(--gutter)) / 6) 100%;
+  background-position: var(--gutter) 0;
+  opacity: .045;
+}
+
+/* the line: one orange line from the opening to the dot by the email.
+   The copy in the space (.wthread) sits under the pages; each page has its own copy (.pthread)
+   just above the page colour and under everything on it, so the line always runs behind the words. */
+.st { isolation: isolate; }
+.wthread { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; z-index: 0; }
+.pthread { position: absolute; left: 0; top: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; z-index: -1; }
+.wthread path, .pthread path { fill: none; stroke: var(--accent); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.wthread circle, .pthread circle { fill: var(--accent); }
+
+/* ---------- type ---------- */
+.giant {
+  font-weight: 800; letter-spacing: -.055em; line-height: .86;
+  font-size: min(13.5vw, calc(var(--vh) * .19));
+}
+.big {
+  font-weight: 800; letter-spacing: -.045em; line-height: .92;
+  font-size: min(6.4vw, calc(var(--vh) * .1)); max-width: 15ch;
+}
+.big .acc { color: var(--accent); }
+/* lines rise into place when their panel arrives */
+.ln { display: block; overflow: hidden; padding-bottom: .05em; }
+.ln > span { display: inline-block; transform: translateY(105%); transition: transform 1s cubic-bezier(.2,.7,.1,1); }
+.on .ln > span { transform: none; }
+.on .ln:nth-child(2) > span { transition-delay: .08s; }
+.on .ln:nth-child(3) > span { transition-delay: .16s; }
+
+/* ---------- 00 opening ---------- */
+.st-intro { padding: 0; }
+.st-intro::before { display: none; }
+.intro-lines { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.intro-line { fill: none; stroke: var(--accent); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.intro-name-wrap { position: absolute; inset: 0; display: grid; place-items: center; }
+#introSvg { width: min(1200px, var(--vw)); height: auto; overflow: visible; }
+.intro-name { font-family: var(--serif); font-style: italic; font-size: 150px; fill: transparent; stroke: var(--accent); stroke-width: 1.2; }
+.intro-name tspan { stroke-dasharray: 1400; stroke-dashoffset: 1400; fill: var(--accent); fill-opacity: 0; }
+.intro-cap { position: absolute; left: var(--gutter); bottom: 28px; color: var(--on-dark-mute); max-width: calc(var(--vw) - 2 * var(--gutter) - 110px); }
+.intro-hint { position: absolute; right: var(--gutter); bottom: 28px; display: flex; align-items: center; gap: 10px; color: var(--on-dark-mute); }
+.dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); }
+
+/* ---------- 01 hero ---------- */
+.st-hero { display: flex; flex-direction: column; }
+.st-hero .giant { margin-top: auto; }
+.hero-foot { margin-top: clamp(28px, 5vh, 56px); max-width: 46ch; }
+.hero-foot p { text-transform: none; font-size: 13px; color: var(--on-dark-mute); }
+
+/* ---------- 02 approach: Daniele's arrow list ---------- */
+.st-approach { display: grid; grid-template-columns: 1.1fr 1fr; grid-template-rows: auto 1fr; column-gap: 6vw; }
+.st-approach .kicker { grid-column: 1 / -1; }
+.st-approach .big { align-self: end; }
+.now-left { align-self: end; }
+.now-bg { margin-top: clamp(16px, 3vh, 28px); max-width: 44ch; font-size: clamp(15px, 1.15vw, 18px); line-height: 1.5; color: var(--on-paper-mute); }
+.steps { align-self: end; display: grid; gap: clamp(6px, 1.4vh, 14px); }
+.steps li { display: grid; grid-template-columns: 1.1em 1fr; column-gap: .25em; font-size: min(7.2vw, calc(var(--vh) * .118)); line-height: 1; letter-spacing: -.04em; font-weight: 500; }
+.steps .arrow { color: var(--accent); opacity: 0; transform: translateX(-.4em); transition: opacity .35s, transform .35s cubic-bezier(.2,.7,.1,1); }
+.steps .word { color: var(--on-paper-mute); opacity: .45; transition: opacity .35s, color .35s; }
+.steps p { grid-column: 2; font-size: clamp(17px, 1.4vw, 22px); letter-spacing: 0; line-height: 1.4; max-width: 32ch; max-height: 0; overflow: hidden; opacity: 0; transition: max-height .5s, opacity .4s, margin .5s; }
+.steps li.cur .arrow { opacity: 1; transform: none; }
+.steps li.cur .word { color: var(--on-paper); opacity: 1; }
+.steps li.cur p { max-height: 6em; opacity: 1; margin: .5em 0 .4em; }
+/* the Sisco Solutions card (Kino's circled space, 2026-11-06): a small browser window with a picture of the website's home page,
+   and its name. Wide screens: in the space between "02 — Now" and the headline (the headline stays where it was);
+   phones: under the paragraph (below). It builds in with the page (assets/type.js); the line goes round it (blend.js nowRoute). */
+.sisco-card {
+  --sc-h: clamp(118px, calc(var(--vh) * .22), 236px);
+  display: flex; align-items: center; gap: clamp(16px, 1.7vw, 30px); align-self: flex-start; width: fit-content; max-width: 100%;
+  text-decoration: none; color: var(--on-paper);
+}
+@media (min-width: 861px) {
+  .st-approach .now-left { align-self: stretch; display: flex; flex-direction: column; }
+  .sisco-card { order: -1; margin: auto 0; }
+}
+.sc-win { position: relative; flex: none; display: block; width: calc(var(--sc-h) * 1.5); height: var(--sc-h); background: var(--paper); }
+.sc-edge { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; z-index: 2; }
+.sc-edge rect { fill: none; stroke: var(--ink); stroke-width: 1.3; vector-effect: non-scaling-stroke; stroke-dasharray: 1; transition: stroke .3s; }
+.sc-bar {
+  position: absolute; left: 0; right: 0; top: 0; height: calc(var(--sc-h) * .145); display: flex; align-items: center; gap: 4px;
+  padding: 0 calc(var(--sc-h) * .055); border-bottom: 1px solid rgba(11, 11, 12, .5);
+}
+.sc-dot { flex: none; width: 5px; height: 5px; border-radius: 50%; border: 1px solid var(--ink); }
+.sc-addr {
+  flex: 1 1 auto; min-width: 0; margin-left: 5px; padding: 0 8px; border-radius: 99px; background: rgba(11, 11, 12, .07);
+  min-height: 1.6em; font-family: var(--mono); font-weight: 500; color: var(--ink); font-size: clamp(10px, calc(var(--sc-h) * .068), 12.5px); line-height: 1.6; letter-spacing: .02em; white-space: nowrap; overflow: hidden;
+}
+.sc-view { position: absolute; left: 0; right: 0; bottom: 0; top: calc(var(--sc-h) * .145); overflow: hidden; background: #E3DCD3; }
+.sc-view img { display: block; width: 100%; height: auto; transition: transform .9s cubic-bezier(.2, .7, .1, 1); }
+.sc-text { display: grid; gap: 8px; }
+.sc-label { color: #3A3833; min-height: 1.6em; }
+.sc-name { font-weight: 500; font-size: clamp(20px, min(2.05vw, 3.9vh), 34px); letter-spacing: -.025em; line-height: 1.05; white-space: nowrap; }
+.sc-arrow { display: inline-block; margin-left: .16em; color: var(--accent); transition: transform .35s cubic-bezier(.2, .7, .1, 1); }
+/* hover / focus: an orange edge, the picture drifts down the page a little, the arrow nudges */
+.sisco-card:hover .sc-edge rect, .sisco-card:focus-visible .sc-edge rect { stroke: var(--accent); }
+.sisco-card:hover .sc-view img, .sisco-card:focus-visible .sc-view img { transform: translateY(-5.5%); }
+.sisco-card:hover .sc-arrow, .sisco-card:focus-visible .sc-arrow { transform: translate(.14em, -.14em); }
+.sisco-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 8px; }
+
+/* ---------- 03 capabilities: the moving tile ---------- */
+.st-cap { display: flex; flex-direction: column; }
+.tiles { margin-top: auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: #262628; border: 1px solid #262628; }
+.tiles-lbl { grid-column: 1 / -1; background: var(--ink); padding: 10px 14px; color: var(--on-dark-mute); }
+.tile {
+  position: relative; background: var(--ink); padding: 18px 16px 16px; min-height: min(15vh, 132px);
+  display: flex; flex-direction: column; justify-content: space-between; gap: 10px;
+  transition: background .35s, color .35s;
+}
+.tile strong { font-weight: 500; font-size: clamp(16px, 1.5vw, 22px); letter-spacing: -.01em; }
+.tile span { font-size: 14px; line-height: 1.35; color: var(--on-dark-mute); transition: color .35s; }
+.tile.cur { background: var(--accent); color: var(--ink); }
+.tile.cur span { color: rgba(11,11,12,.86); }
+
+/* ---------- 04 work: Gianpaolo's framed pieces over a soft colour field ---------- */
+.st-work { display: grid; grid-template-rows: auto auto 1fr auto; }
+.blob {
+  position: absolute; inset: -20%; pointer-events: none; z-index: -2; filter: blur(60px);
+  background:
+    radial-gradient(40% 45% at 72% 38%, rgba(var(--tint), .30), transparent 70%),
+    radial-gradient(35% 40% at 24% 70%, rgba(var(--tint), .16), transparent 70%);
+  transform: translate3d(calc(var(--drift, 0) * 6%), 0, 0);
+}
+.st-work > *:not(.blob):not(.pthread) { position: relative; z-index: 1; }
+.work-head { display: flex; justify-content: space-between; gap: 20px; padding-bottom: 14px; border-bottom: 1px solid rgba(11,11,12,.16); margin-bottom: 16px; }
+.proj-no { opacity: .7; }
+.frame { position: relative; align-self: center; justify-self: center; width: min(62vw, calc((var(--vh) - 430px) * 2.1)); min-width: min(100%, 300px); margin: 10px 0; padding: 20px 24px 14px; }
+.frame .ill { width: 100%; height: auto; display: block; overflow: visible; }
+.br { position: absolute; width: 14px; height: 14px; border: 0 solid currentColor; opacity: .7; }
+.br.tl { left: 0; top: 0; border-left-width: 1.5px; border-top-width: 1.5px; }
+.br.tr { right: 0; top: 0; border-right-width: 1.5px; border-top-width: 1.5px; }
+.br.bl { left: 0; bottom: 0; border-left-width: 1.5px; border-bottom-width: 1.5px; }
+.br.br- { right: 0; bottom: 0; border-right-width: 1.5px; border-bottom-width: 1.5px; }
+.dims { position: absolute; right: 2px; top: -20px; font-size: 10px; opacity: .72; }
+.frame figcaption { font-family: var(--serif); font-style: italic; font-size: clamp(17px, 1.5vw, 23px); line-height: 1.22; text-align: center; max-width: 48ch; margin: 12px auto 0; }
+.ill .ink rect, .ill .ink line, .ill .ink path { fill: none; stroke: var(--ink); stroke-width: 1.6; }
+.ill .ink .thin { stroke-width: 1; }
+.ill .ink .fill { fill: var(--paper); }
+.ill .ink .win { stroke-width: 5; stroke: var(--paper); }
+.ill .ink .accfill { fill: var(--accent); stroke: none; }
+.ill .unit { stroke: var(--ink); stroke-width: 1; fill: none; }
+.ill .unit.done { fill: var(--accent); stroke: var(--accent); }
+.ill .unit.part { fill: url(#hatch); }
+.ill .acc-line { fill: none; stroke: var(--accent); stroke-width: 1.6; stroke-dasharray: 5 6; }
+.ill .lbl { font-family: var(--mono); font-size: 12px; fill: var(--ink); letter-spacing: .04em; stroke: none; }
+.ill .lbl.acc { fill: var(--accent); }
+.ill .lbl.muted { fill: var(--on-paper-mute); }
+/* the Drafting drawing draws itself as you scroll: assets/pages.js drives every stroke from the page's rest */
+.proj-foot { display: flex; justify-content: space-between; align-items: end; gap: 24px; flex-wrap: wrap; }
+.proj-name { font-weight: 900; text-transform: uppercase; letter-spacing: -.06em; line-height: .82; font-size: min(8.6vw, calc(var(--vh) * .12)); }
+.tags { display: flex; flex-direction: column; gap: 4px; text-align: right; padding-bottom: 6px; }
+.tags li::before { content: "— "; color: var(--accent); }
+.st-co .co-lede { align-self: center; font-family: var(--serif); font-style: italic; font-size: min(4.6vw, calc(var(--vh) * .075)); line-height: 1.08; max-width: 20ch; }
+/* the pitch (text-led work panel) */
+.st-lv { grid-template-rows: auto 1fr auto; }
+.lv-mid { align-self: center; display: grid; gap: clamp(16px, 3vh, 28px); }
+.lv-lede { font-family: var(--serif); font-style: italic; font-size: min(4vw, calc(var(--vh) * .066)); line-height: 1.1; max-width: 26ch; }
+.lv-body { font-size: clamp(16px, 1.25vw, 19px); line-height: 1.5; max-width: 52ch; }
+
+/* ---------- Drafting (#work) + The Pitch (#work-2): Kino's sketches 3, 4 and 5 (2026-11-05) ----------
+   Drafting: the words down the left (project, the tags as a ledger, the title), the framed drawings big on the right.
+   The Pitch, flipped: Kino's stage drawing on the left, the words on the right.
+   Both drawings and the ledger move with the page's rest (assets/pages.js), so they run backwards when you scroll back.
+   A band above the ruler is kept clear for the orange line. */
+#work, #work-2 { padding-bottom: calc(var(--vh) * .14); }
+#work { grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto auto minmax(0, 1fr) auto auto; column-gap: var(--fgap, clamp(28px, 3.4vw, 64px)); }
+#work .work-head { grid-column: 1 / -1; }
+#work .proj-no { grid-column: 1; grid-row: 2; }
+#work .proj-foot { display: contents; }
+#work .proj-name { grid-column: 1; grid-row: 5; white-space: nowrap; }
+/* --fw: the frame's width, fitted by pages.js to the room on the page (this is the fallback);
+   --fch / --fgap / --fmt: the margins pages.js lets give way so the frame can be bigger */
+#work .frame {
+  grid-column: 2; grid-row: 2 / 6; align-self: start; justify-self: end;
+  width: var(--fw, min(calc(var(--vw) * .56), calc(var(--vh) * 2.1 - 600px))); min-width: 0;
+  margin: var(--fmt, 22px) var(--fch, 4.5vw) 0 0;
+}
+#work .frame figcaption { font-size: clamp(19px, min(1.9vw, 4vh), 31px); max-width: 54ch; margin-top: 14px; text-wrap: balance; }
+#work .ill { --k: 1; }
+#work .ill .ink rect, #work .ill .ink line, #work .ill .ink path { stroke-width: calc(1.55px * var(--k)); stroke-linecap: round; }
+#work .ill .ink .thin { stroke-width: calc(1px * var(--k)); }
+#work .ill .ink .win { stroke-width: calc(1.55px * var(--k) + 3.6px); stroke-linecap: butt; }
+#work .ill .acc-line { stroke-width: calc(1.6px * var(--k)); }
+#work .ill .guides line { stroke: var(--ink); stroke-width: calc(.8px * var(--k)); opacity: .34; }
+#work .ill .dimln { fill: none; stroke: var(--accent); stroke-width: calc(1.1px * var(--k)); }
+#work .ill .lhead { fill: var(--accent); }
+/* the tags as a ledger: an orange rule runs from the left edge and sets each line's words to the right */
+#work .tags-big {
+  grid-column: 1; grid-row: 4; align-self: end; display: grid; gap: .3em; margin: 0 0 clamp(22px, 5.5vh, 64px); padding: 0;
+  font-family: var(--sans); font-weight: 500; font-size: clamp(22px, min(2.15vw, 4.5vh), 40px);
+  letter-spacing: -.028em; line-height: 1.06; text-transform: none; text-align: left; max-width: 15.5em; color: var(--on-paper);
+}
+#work .tags-big li { display: flex; align-items: center; gap: .42em; }
+#work .tags-big li::before { content: none; }
+#work .tg-line { flex: 1 1 auto; min-width: .6em; height: 1.6px; background: var(--accent); transform-origin: 0 50%; }
+#work .tg-word { position: relative; white-space: nowrap; flex: none; }
+/* a drafting tick where the rule meets the words */
+#work .tg-word::before { content: ""; position: absolute; left: -.42em; top: 50%; width: 1.6px; height: .46em; margin: -.23em 0 0 -.8px; background: var(--accent); transform: rotate(45deg); }
+
+#work-2 { grid-template-columns: minmax(0, 54fr) minmax(0, 46fr); grid-template-rows: auto minmax(0, 1fr) auto; column-gap: clamp(28px, 4vw, 80px); }
+#work-2 .proj-no { grid-column: 1; grid-row: 1; }
+#work-2 .stage { grid-column: 1; grid-row: 2; position: relative; min-height: 0; margin: clamp(12px, 3vh, 36px) 0 clamp(14px, 3.4vh, 40px); }
+#work-2 .stage svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+#pitchStage { --k: 1; }
+#pitchStage path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+#pitchStage .o { stroke: var(--accent); stroke-width: calc(1.9px * var(--k)); }
+#pitchStage .i { stroke: var(--ink); stroke-width: calc(1.7px * var(--k)); }
+#pitchStage .chart { stroke-width: calc(1.4px * var(--k)); opacity: .6; }
+#work-2 .lv-mid { grid-column: 2; grid-row: 1 / 4; align-self: center; }
+#work-2 .lv-lede { font-size: min(3.5vw, calc(var(--vh) * .064)); max-width: 24ch; }
+#work-2 .lv-body { max-width: 50ch; }
+#work-2 .proj-foot { grid-column: 1; grid-row: 3; justify-content: start; align-items: end; column-gap: clamp(20px, 2.6vw, 44px); flex-wrap: nowrap; }
+#work-2 .tags { text-align: left; }
+
+@media (max-width: 860px) {
+  #work, #work-2 { padding-bottom: 76px; }
+  /* Drafting on a phone: a clear band at the top for the line, then the frame, the ledger, the title */
+  #work { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto auto auto minmax(0, 1fr) auto; }
+  #work .frame { grid-column: 1; grid-row: 3; justify-self: start; width: calc(100% - 22px); margin: max(28px, calc(var(--vh) * .36 - 150px)) 0 0; padding: 14px 10px 10px; }
+  #work .frame figcaption { font-size: 19px; }
+  #work .tags-big { grid-row: 4; align-self: start; margin: clamp(18px, 3.4vh, 32px) 0 0; font-size: 23px; width: calc(100% - 40px); }
+  #work .proj-name { grid-row: 6; }
+  /* The Pitch on a phone: stacked, the drawing small above the words; a clear band for the line above the title.
+     Title and tags share one row (they stack again if the screen is too narrow), so the line clears both. */
+  #work-2 { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto auto minmax(0, 1fr) auto; }
+  #work-2 .stage { grid-row: 2; height: min(calc(var(--vh) * .2), calc((var(--vw) - 32px) * .64)); margin: 14px 0 6px; }
+  #work-2 .lv-mid { grid-column: 1; grid-row: 3; align-self: start; gap: 12px; }
+  #work-2 .lv-lede { font-size: 24px; }
+  #work-2 .lv-body { font-size: 15px; }
+  #work-2 .proj-foot { grid-row: 5; flex-wrap: wrap; row-gap: 10px; }
+  #work-2 .proj-name { font-size: min(7.4vw, calc(var(--vh) * .12)); }
+}
+/* short phones (667px tall): everything fits above the ruler. Drafting: a narrower band above the frame for the line.
+   The Pitch: a little less air round the drawing and a slightly smaller lede; its line runs under the title row (blend.js) */
+@media (max-width: 860px) and (max-height: 760px) {
+  #work .frame { margin-top: max(28px, calc(var(--vh) * .36 - 186px)); }
+  #work .tags-big { margin-top: 14px; }
+  #work-2 .stage { height: min(calc(var(--vh) * .19), calc((var(--vw) - 32px) * .64)); margin: 8px 0 2px; }
+  #work-2 .lv-mid { gap: 8px; }
+  #work-2 .lv-lede { font-size: 22px; }
+}
+/* creative frames waiting for the real pieces */
+.ill .ph rect { fill: none; stroke: var(--on-paper-mute); stroke-width: 1; stroke-dasharray: 6 7; }
+.tile.span2 { grid-column: span 2; }
+/* the vote */
+.st-ceo { display: flex; flex-direction: column; }
+.ceo-fact { color: var(--accent); }
+.st-ceo .giant { margin-top: auto; }
+.ceo-body { margin-top: clamp(24px, 5vh, 52px); max-width: 44ch; font-size: clamp(16px, 1.3vw, 20px); line-height: 1.5; color: #D6D3CD; }
+.contact-now { max-width: 46ch; font-size: clamp(15px, 1.15vw, 18px); line-height: 1.5; color: #D6D3CD; }
+.foot a { text-decoration: none; }
+.foot a:hover { color: var(--accent); }
+.btn { display: inline-block; padding: 14px 20px; border: 1px solid var(--ink); text-decoration: none; transition: background .2s, color .2s; margin-bottom: 6px; }
+.btn:hover { background: var(--ink); color: var(--paper); }
+
+/* ---------- 05 about: Gianpaolo's layout ---------- */
+.st-about { display: flex; flex-direction: column; }
+.about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5vw; margin-top: auto; }
+.about-name { font-family: var(--serif); font-size: min(6.2vw, calc(var(--vh) * .1)); line-height: .98; letter-spacing: -.01em; }
+.about-name em { color: var(--accent); }
+.about-body { display: grid; gap: 14px; align-content: end; max-width: 60ch; font-size: clamp(15px, 1.15vw, 18px); line-height: 1.5; color: #D6D3CD; }
+/* wide screens: the paragraphs sit at the right of their column (same width, same lines), so the drawing between
+   the name and the paragraphs has more room */
+@media (min-width: 861px) { .about-body { justify-self: end; } }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-top: clamp(24px, 5vh, 56px); padding-top: 18px; border-top: 1px solid #2B2B2C; }
+.stats dd { font-size: clamp(17px, 1.6vw, 24px); letter-spacing: -.02em; line-height: 1.15; }
+.stats dt { margin-top: 8px; color: var(--on-dark-mute); }
+/* Origins, Kino's sketch 7: the line draws the hoop, the wave and the water (blend.js); the ball, the surfer,
+   his board and the splash are drawn here (assets/origins.js), under the line and under every word */
+.pscene { position: absolute; left: 0; top: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; z-index: -1; }
+.pscene path, .pscene circle, .pscene ellipse {
+  fill: none; stroke: var(--accent); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke;
+}
+.pscene .og-ball { fill: rgba(255, 77, 26, .12); }
+.pscene .og-drop { fill: var(--accent); stroke: none; }
+.pscene .og-trail { stroke-width: 1.3; }
+.pscene .og-measure { visibility: hidden; }
+
+/* ---------- 06 contact: Daniele's closing ---------- */
+.st-contact { display: flex; flex-direction: column; padding-bottom: 110px; }
+.st-contact .giant { margin-top: auto; }
+.contact-row { display: flex; justify-content: space-between; align-items: end; gap: 24px; flex-wrap: wrap; margin-top: clamp(24px, 5vh, 56px); }
+.contact-big { position: relative; font-family: var(--serif); font-style: italic; font-size: min(5.4vw, calc(var(--vh) * .085)); line-height: 1; text-decoration: none; border-bottom: 1px solid currentColor; overflow-wrap: anywhere; }
+.contact-big:hover { color: var(--accent); }
+.end-dot { position: absolute; left: -22px; top: 50%; width: 9px; height: 9px; margin-top: -4px; border-radius: 50%; background: var(--accent); }
+.contact-list { display: flex; gap: 28px; flex-wrap: wrap; }
+.contact-list a { text-decoration: none; }
+.contact-list a:hover { color: var(--accent); }
+/* Instagram and LinkedIn (2026-11-06): each app's logo with the handle, bigger than the list under them; orange on hover / focus */
+.contact-side { display: flex; flex-direction: column; align-items: flex-end; gap: clamp(12px, 2.2vh, 22px); }
+.socials { display: flex; flex-wrap: wrap; gap: 12px clamp(22px, 2.4vw, 40px); }
+.soc { display: inline-flex; align-items: center; gap: 11px; text-decoration: none; color: var(--on-dark); transition: color .25s; }
+.soc-logo { flex: none; width: clamp(28px, 2.3vw, 36px); height: auto; overflow: visible; }
+.soc-logo .ig { fill: none; stroke: currentColor; stroke-width: 1.9; }
+.soc-logo .ig-dot, .soc-logo .li-sq { fill: currentColor; }
+.soc-logo .li-in { fill: var(--night); }
+.soc-handle { font-size: clamp(17px, 1.45vw, 23px); font-weight: 500; letter-spacing: -.01em; line-height: 1.2; }
+.soc:hover, .soc:focus-visible { color: var(--accent); }
+.foot { position: absolute; left: var(--gutter); right: var(--gutter); bottom: 58px; display: flex; justify-content: space-between; color: var(--on-dark-mute); }
+
+/* ---------- top bar ---------- */
+.bar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 20; height: var(--bar-h);
+  display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 32px;
+  padding: 0 var(--gutter);
+  font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: .03em;
+  color: #fff; mix-blend-mode: difference;
+}
+.mark { font-family: var(--sans); font-weight: 900; font-size: 22px; letter-spacing: -.04em; text-decoration: none; }
+.bar-facts { display: flex; gap: clamp(24px, 6vw, 96px); justify-content: center; }
+.bar-facts dt { opacity: .62; }
+.bar-nav { display: flex; gap: 22px; }
+.bar-nav a { text-decoration: none; }
+.bar-nav a:hover, .bar-nav a.cur { text-decoration: underline; text-underline-offset: 4px; }
+
+/* ---------- the ruler: where you are (Gianpaolo) ---------- */
+.ruler {
+  position: fixed; left: var(--gutter); right: var(--gutter); bottom: 22px; z-index: 20;
+  display: grid; grid-template-columns: 1fr minmax(160px, 46vw) 1fr; align-items: center; gap: 24px;
+  color: var(--ruler-c, #F1EEE8); font-size: 10px; pointer-events: none; transition: color .4s;
+}
+.ruler-geo { text-align: right; opacity: .62; }
+.ruler-track {
+  position: relative; height: 9px;
+  background:
+    linear-gradient(currentColor, currentColor) 0 50% / 100% 1px no-repeat;
+  opacity: .9;
+}
+.ruler-track::before { content: ""; position: absolute; inset: 0; background: var(--ticks, none); opacity: .55; }
+.ruler-fill { position: absolute; left: 0; top: 50%; height: 1px; margin-top: -.5px; width: 0; background: var(--accent); }
+.ruler-dot { position: absolute; top: 50%; width: 9px; height: 9px; margin: -4.5px 0 0 -4.5px; border-radius: 50%; background: var(--accent); left: 0; }
+
+/* ---------- cursor (Daniele): an orange dot ---------- */
+.cursor {
+  position: fixed; left: 0; top: 0; z-index: 30; width: 10px; height: 10px; margin: -5px 0 0 -5px;
+  border-radius: 50%; background: var(--accent); pointer-events: none; opacity: 0;
+  transition: width .25s, height .25s, margin .25s, background .25s, border .25s, opacity .3s;
+}
+.cursor.show { opacity: 1; }
+.cursor.link { width: 34px; height: 34px; margin: -17px 0 0 -17px; background: transparent; border: 1.5px solid var(--accent); }
+html.dot-cursor, html.dot-cursor a, html.dot-cursor button { cursor: none; }
+
+/* ---------- phones ---------- */
+@media (max-width: 860px) {
+  .bar { grid-template-columns: auto 1fr; gap: 12px; }
+  .bar-facts { display: none; }
+  .bar-nav { justify-content: end; gap: 14px; }
+  .tile.span2 { grid-column: span 2; }
+  .lv-lede { font-size: 27px; }
+  .end-dot { left: -13px; width: 7px; height: 7px; margin-top: -3.5px; }
+  .st { padding-bottom: 76px; }
+  .st-approach { grid-template-columns: 1fr; grid-template-rows: auto auto 1fr; }
+  .st-approach .now-left { align-self: start; }
+  .now-bg { font-size: 15px; }
+  .sisco-card { --sc-h: clamp(44px, calc(var(--vh) * .082), 74px); gap: 12px; margin: clamp(14px, calc(var(--vh) * .05 - 4px), 40px) 0 0 clamp(0px, 5vw, 24px); }
+  .sc-bar { gap: 2px; padding: 0 4px; }
+  .sc-dot { width: 3px; height: 3px; border-width: .8px; }
+  .sc-addr { display: none; }
+  .sc-text { gap: 4px; }
+  .sc-label { font-size: 11px; color: var(--on-paper); }
+  .sc-name { font-size: 18px; }
+  .contact-side { align-items: flex-start; }
+  .socials { gap: 10px 26px; }
+  .soc-logo { width: 26px; }
+  .soc-handle { font-size: 16px; }
+  .steps li { font-size: 12.5vw; }
+  .tiles { grid-template-columns: 1fr 1fr; }
+  .tile { min-height: 0; padding: 12px; }
+  .tile span { display: none; }
+  .tile.cur span { display: block; }
+  .work-head .muted { display: none; }
+  .frame { width: 100%; padding: 14px 10px 10px; }
+  .tags { text-align: left; }
+  .about-grid { grid-template-columns: 1fr; gap: 16px; }
+  .about-body { font-size: 15px; gap: 10px; }
+  .stats { grid-template-columns: 1fr 1fr; }
+  .ruler { grid-template-columns: 1fr; gap: 8px; }
+  .ruler-geo, .ruler-name { display: none; }
+}
+
+/* short phones: the card a size smaller and closer to the paragraph, so the list below keeps its room */
+@media (max-width: 860px) and (max-height: 760px) {
+  .sisco-card { --sc-h: 44px; margin-top: 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ln > span, .ill .ink > * { transition: none !important; }
+  /* the card: shown complete; on hover / focus only its edge turns orange, nothing moves */
+  .sc-view img, .sc-arrow, .sc-edge rect, .soc { transition: none; }
+  .sisco-card:hover .sc-view img, .sisco-card:focus-visible .sc-view img, .sisco-card:hover .sc-arrow, .sisco-card:focus-visible .sc-arrow { transform: none; }
+}
